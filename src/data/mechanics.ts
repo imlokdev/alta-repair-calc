@@ -1,6 +1,6 @@
 import type { MechanicItem } from '../types';
 
-export const categories: string[] = ['MECÂNICA', 'KIT\'s', 'SEGURO', 'ESTÉTICA', 'OUTROS'];
+export const categories: string[] = ['KIT\'s', 'SEGURO', 'ESTÉTICA', 'OUTROS'];
 
 export const mechanicsItems: MechanicItem[] = [
   // MECÂNICA
