@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { mechanicsItems, categories } from './data/mechanics'
-import type { HistoryRecord } from './types'
+import type { HistoryRecord, ToastMessage } from './types'
 
 import MechanicsSidebar from './components/MechanicsSidebar.vue'
 import CartSidebar from './components/CartSidebar.vue'
@@ -9,6 +9,7 @@ import AppHeader from './components/AppHeader.vue'
 import ServiceCard from './components/ServiceCard.vue'
 import CheckoutBar from './components/CheckoutBar.vue'
 import HistoryModal from './components/HistoryModal.vue'
+import ToastNotification from './components/ToastNotification.vue'
 
 const activeCategory = ref<string>('KIT\'s')
 const searchQuery = ref<string>('')
@@ -21,10 +22,15 @@ const showPassportWarning = ref<boolean>(false)
 const history = ref<HistoryRecord[]>([])
 const isDarkMode = ref<boolean>(true)
 const showModal = ref<boolean>(false)
+const highlightedRecordId = ref<number | null>(null)
 
 // Estados das Sidebars
 const isSidebarPinned = ref<boolean>(false)
 const isCartPinned = ref<boolean>(false)
+
+// Estados dos Toasts
+const toasts = ref<ToastMessage[]>([])
+let toastCounter = 0
 
 onMounted(() => {
   toggleTheme(true)
@@ -48,6 +54,20 @@ const toggleTheme = (dark?: boolean): void => {
   isDarkMode.value ? document.documentElement.classList.add('dark') : document.documentElement.classList.remove('dark')
 }
 
+// === LÓGICA DE TOASTS ===
+const addToast = (toast: Omit<ToastMessage, 'id'>) => {
+  const id = toastCounter++
+  const wrappedOnClick = toast.onClick ? () => { toast.onClick!(); removeToast(id); } : undefined
+  
+  toasts.value.push({ ...toast, id, onClick: wrappedOnClick })
+  setTimeout(() => removeToast(id), 5000)
+}
+
+const removeToast = (id: number) => {
+  toasts.value = toasts.value.filter(t => t.id !== id)
+}
+
+// === LÓGICA DE ITENS ===
 const sidebarItems = computed(() => mechanicsItems.filter(item => item.category === 'MECÂNICA'))
 
 const filteredItems = computed(() => {
@@ -79,10 +99,20 @@ const setQuantity = (itemId: string, value: number): void => {
   if (value >= 0) quantities.value[itemId] = value
 }
 
-const handleLimpar = (): void => {
+// === CHECKOUT ===
+const handleLimpar = (silent = false): void => {
   mechanicsItems.forEach(item => quantities.value[item.id] = 0)
   passportId.value = ''
   showPassportWarning.value = false
+  
+  if (!silent) {
+    addToast({ type: 'info', title: 'Carrinho Limpo', message: 'Os itens selecionados foram removidos.' })
+  }
+}
+
+const openHistoryWithHighlight = (id: number) => {
+  highlightedRecordId.value = id
+  showModal.value = true
 }
 
 const handleFinalizar = (): void => {
@@ -91,6 +121,7 @@ const handleFinalizar = (): void => {
   if (!passportId.value || Number(passportId.value) <= 0) {
     showPassportWarning.value = true
     document.getElementById('passportInput')?.focus()
+    addToast({ type: 'error', title: 'Aviso', message: 'Preencha o Passaporte do cliente!' })
     return
   }
 
@@ -106,9 +137,10 @@ const handleFinalizar = (): void => {
   })
 
   const header = `ID: ${passportId.value}\n\n`
+  const recordId = Date.now()
   
   const record: HistoryRecord = {
-    id: Date.now(),
+    id: recordId,
     time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
     passportId: passportId.value,
     total: grandTotal.value,
@@ -119,12 +151,22 @@ const handleFinalizar = (): void => {
   
   history.value.unshift(record)
   localStorage.setItem('alta_repair_history', JSON.stringify(history.value))
-  handleLimpar()
+  handleLimpar(true) // Limpa sem disparar o toast de limpar
+
+  // Dispara o toast de sucesso com evento de clique
+  addToast({ 
+    type: 'success', 
+    title: 'Venda Finalizada!', 
+    message: 'Atendimento salvo. Clique aqui para abrir o histórico.',
+    clickable: true,
+    onClick: () => openHistoryWithHighlight(recordId)
+  })
 }
 
 const handleClearHistory = (): void => {
   history.value = []
   localStorage.removeItem('alta_repair_history')
+  addToast({ type: 'info', title: 'Histórico Apagado', message: 'Todos os registros foram excluídos do navegador.' })
 }
 </script>
 
@@ -179,7 +221,6 @@ const handleClearHistory = (): void => {
       </div>
 
       <div class="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-6">
-        <!-- O Segredo está aqui: auto-fit dinâmico baseado no espaço restante -->
         <section v-if="filteredItems.length > 0" class="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-6 content-start">
           <ServiceCard 
             v-for="item in filteredItems" 
@@ -195,15 +236,22 @@ const handleClearHistory = (): void => {
 
     <CheckoutBar 
       :grandTotal="grandTotal"
-      @clear="handleLimpar"
+      @clear="handleLimpar(false)"
       @finalize="handleFinalizar"
     />
 
     <HistoryModal 
       :show="showModal" 
       :history="history" 
-      @close="showModal = false" 
+      :highlightedId="highlightedRecordId"
+      @close="showModal = false; highlightedRecordId = null" 
       @clearHistory="handleClearHistory" 
+    />
+    
+    <!-- Renderiza os Toasts Globalmente -->
+    <ToastNotification 
+      :toasts="toasts" 
+      @remove="removeToast" 
     />
   </div>
 </template>

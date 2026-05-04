@@ -5,6 +5,7 @@ import { formatCurrency } from '../utils/formatters'
 defineProps<{
   show: boolean;
   history: HistoryRecord[];
+  highlightedId: number | null;
 }>()
 
 const emit = defineEmits<{
@@ -19,10 +20,10 @@ const copiarTexto = async (text: string) => {
 </script>
 
 <template>
-  <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm">
+  <div v-if="show" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm">
     <div class="bg-white dark:bg-[#151822] rounded-3xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden border border-slate-200 dark:border-[#1e2330]">
       
-      <div class="flex items-center justify-between p-6">
+      <div class="flex items-center justify-between p-6 pb-4">
         <h3 class="font-black italic text-2xl tracking-tighter text-slate-900 dark:text-white">
           HISTÓRICO DE <span class="text-[#ffca28]">VENDAS</span>
         </h3>
@@ -31,10 +32,19 @@ const copiarTexto = async (text: string) => {
         </button>
       </div>
 
-      <div class="flex-1 overflow-y-auto custom-scrollbar px-6 pb-6 space-y-4">
+      <!-- Adicionado pt-2 aqui para dar um respiro pra sombra não cortar em cima -->
+      <div class="flex-1 overflow-y-auto custom-scrollbar px-6 pt-2 pb-6 space-y-4">
         <div v-if="history.length === 0" class="text-center text-slate-400 dark:text-gray-600 italic py-10 text-sm">Nenhum histórico registrado no navegador.</div>
         
-        <div v-for="record in history" :key="record.id" class="p-5 rounded-2xl border border-slate-200 dark:border-[#1e2330] bg-slate-50 dark:bg-[#0b0e14]">
+        <!-- ITEM DO HISTÓRICO COM ESTILO DINÂMICO DE DESTAQUE -->
+        <div 
+          v-for="record in history" 
+          :key="record.id" 
+          class="p-5 rounded-2xl transition-all duration-700"
+          :class="record.id === highlightedId 
+            ? 'border-2 border-[#ffca28] bg-yellow-50 dark:bg-[#1a170b] shadow-[0_0_20px_rgba(255,202,40,0.15)] relative z-10' 
+            : 'border border-slate-200 dark:border-[#1e2330] bg-slate-50 dark:bg-[#0b0e14]'"
+        >
           <div class="flex justify-between items-start mb-2">
             <span class="text-sm font-bold text-[#ffca28] tracking-wider uppercase">Cliente ID: {{ record.passportId }}</span>
             <span class="text-xs font-bold text-slate-400">{{ record.time }}</span>

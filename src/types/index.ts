@@ -18,3 +18,12 @@ export interface HistoryRecord {
   kitsText: string;
   cerasText: string;
 }
+
+export interface ToastMessage {
+  id: number;
+  type: 'success' | 'info' | 'error';
+  title: string;
+  message: string;
+  clickable?: boolean;
+  onClick?: () => void;
+}

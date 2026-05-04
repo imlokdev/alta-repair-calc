@@ -5,7 +5,8 @@ defineProps<{
   grandTotal: number;
 }>()
 
-defineEmits<{
+// AQUI ESTAVA O BUG: Faltava o "const emit =" para podermos usar no template!
+const emit = defineEmits<{
   (e: 'clear'): void;
   (e: 'finalize'): void;
 }>()
