@@ -4,12 +4,12 @@ import { mechanicsItems, categories } from './data/mechanics'
 import type { HistoryRecord } from './types'
 
 import MechanicsSidebar from './components/MechanicsSidebar.vue'
+import CartSidebar from './components/CartSidebar.vue'
 import AppHeader from './components/AppHeader.vue'
 import ServiceCard from './components/ServiceCard.vue'
 import CheckoutBar from './components/CheckoutBar.vue'
 import HistoryModal from './components/HistoryModal.vue'
 
-// Estado Principal
 const activeCategory = ref<string>('KIT\'s')
 const searchQuery = ref<string>('')
 const quantities = ref<Record<string, number>>(
@@ -22,10 +22,10 @@ const history = ref<HistoryRecord[]>([])
 const isDarkMode = ref<boolean>(true)
 const showModal = ref<boolean>(false)
 
-// Estado da Sidebar
+// Estados das Sidebars
 const isSidebarPinned = ref<boolean>(false)
+const isCartPinned = ref<boolean>(false)
 
-// Configuração Inicial e LocalStorage
 onMounted(() => {
   toggleTheme(true)
   
@@ -34,28 +34,25 @@ onMounted(() => {
   
   const savedPin = localStorage.getItem('alta_repair_sidebar_pinned')
   if (savedPin === 'true') isSidebarPinned.value = true
+
+  const savedCartPin = localStorage.getItem('alta_repair_cart_pinned')
+  if (savedCartPin === 'true') isCartPinned.value = true
 })
 
-// Salva o pin automaticamente quando for alterado
-watch(isSidebarPinned, (newVal) => {
-  localStorage.setItem('alta_repair_sidebar_pinned', String(newVal))
-})
-
-watch(passportId, () => {
-  if (passportId.value) showPassportWarning.value = false
-})
+watch(isSidebarPinned, (newVal) => localStorage.setItem('alta_repair_sidebar_pinned', String(newVal)))
+watch(isCartPinned, (newVal) => localStorage.setItem('alta_repair_cart_pinned', String(newVal)))
+watch(passportId, () => { if (passportId.value) showPassportWarning.value = false })
 
 const toggleTheme = (dark?: boolean): void => {
   isDarkMode.value = dark ?? !isDarkMode.value
   isDarkMode.value ? document.documentElement.classList.add('dark') : document.documentElement.classList.remove('dark')
 }
 
-// Filtros de Itens
 const sidebarItems = computed(() => mechanicsItems.filter(item => item.category === 'MECÂNICA'))
 
 const filteredItems = computed(() => {
   return mechanicsItems.filter(item => {
-    if (item.category === 'MECÂNICA') return false // Ignora a mecânica no grid
+    if (item.category === 'MECÂNICA') return false
     if (searchQuery.value) return item.name.toLowerCase().includes(searchQuery.value.toLowerCase())
     if (!activeCategory.value) return true
     return item.category === activeCategory.value
@@ -73,10 +70,13 @@ const itemsInOrder = computed<string>(() => {
     : selected.map(item => `${quantities.value[item.id]}x ${item.outputName}`).join(', ')
 })
 
-// Funções de Negócio
 const updateQuantity = (itemId: string, change: number): void => {
   const next = quantities.value[itemId] + change
   if (next >= 0) quantities.value[itemId] = next
+}
+
+const setQuantity = (itemId: string, value: number): void => {
+  if (value >= 0) quantities.value[itemId] = value
 }
 
 const handleLimpar = (): void => {
@@ -129,19 +129,26 @@ const handleClearHistory = (): void => {
 </script>
 
 <template>
-  <!-- Wrapper Base: 
-       A mágica acontece no min-[1800px]:pl-0. Se a tela for gigante (ultrawide), 
-       ele remove o padding pois há margem de sobra para a sidebar viver sem empurrar o layout. -->
   <div 
     class="h-screen h-[100dvh] flex flex-col bg-[#f4f6f8] dark:bg-[#0b0e14] transition-all duration-300 font-sans select-none overflow-hidden"
-    :class="isSidebarPinned ? 'md:pl-64 min-[1800px]:pl-0' : 'pl-0'"
+    :class="[
+      isSidebarPinned ? 'md:pl-64 min-[1800px]:pl-0' : 'pl-0',
+      isCartPinned ? 'md:pr-72 min-[1800px]:pr-0' : 'pr-0'
+    ]"
   >
-    
     <MechanicsSidebar 
       :items="sidebarItems"
       :quantities="quantities"
       v-model:pinned="isSidebarPinned"
       @updateQuantity="updateQuantity"
+    />
+
+    <CartSidebar 
+      :items="mechanicsItems"
+      :quantities="quantities"
+      v-model:pinned="isCartPinned"
+      @updateQuantity="updateQuantity"
+      @setQuantity="setQuantity"
     />
 
     <AppHeader 
@@ -172,7 +179,8 @@ const handleClearHistory = (): void => {
       </div>
 
       <div class="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-6">
-        <section v-if="filteredItems.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 content-start">
+        <!-- O Segredo está aqui: auto-fit dinâmico baseado no espaço restante -->
+        <section v-if="filteredItems.length > 0" class="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-6 content-start">
           <ServiceCard 
             v-for="item in filteredItems" 
             :key="item.id" 
@@ -187,7 +195,6 @@ const handleClearHistory = (): void => {
 
     <CheckoutBar 
       :grandTotal="grandTotal"
-      :itemsInOrder="itemsInOrder"
       @clear="handleLimpar"
       @finalize="handleFinalizar"
     />
