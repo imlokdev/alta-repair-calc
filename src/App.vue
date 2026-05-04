@@ -129,13 +129,14 @@ const handleClearHistory = (): void => {
 </script>
 
 <template>
-  <!-- Wrapper Base: flex-col e aplica o padding esquerdo quando a sidebar tá fixada -->
+  <!-- Wrapper Base: 
+       A mágica acontece no min-[1800px]:pl-0. Se a tela for gigante (ultrawide), 
+       ele remove o padding pois há margem de sobra para a sidebar viver sem empurrar o layout. -->
   <div 
     class="h-screen h-[100dvh] flex flex-col bg-[#f4f6f8] dark:bg-[#0b0e14] transition-all duration-300 font-sans select-none overflow-hidden"
-    :class="isSidebarPinned ? 'md:pl-64' : 'pl-0'"
+    :class="isSidebarPinned ? 'md:pl-64 min-[1800px]:pl-0' : 'pl-0'"
   >
     
-    <!-- Componente da Barra Lateral (Oculta a magia do deslizamento internamente) -->
     <MechanicsSidebar 
       :items="sidebarItems"
       :quantities="quantities"
@@ -201,7 +202,6 @@ const handleClearHistory = (): void => {
 </template>
 
 <style>
-/* CSS Mantido original */
 body { background-color: transparent; margin: 0; padding: 0; overflow: hidden; }
 .no-spin-button::-webkit-outer-spin-button, .no-spin-button::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .no-spin-button { -moz-appearance: textfield; }
