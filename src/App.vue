@@ -195,12 +195,9 @@ const handleClearHistory = (): void => {
 
     <AppHeader 
       v-model:searchQuery="searchQuery" 
-      v-model:passportId="passportId"
       :isDarkMode="isDarkMode"
-      :showPassportWarning="showPassportWarning"
       @toggleTheme="toggleTheme()"
       @openHistory="showModal = true"
-      @finalize="handleFinalizar"
     />
 
     <main class="flex-1 w-full max-w-7xl mx-auto px-4 flex flex-col gap-6 min-h-0">
@@ -236,6 +233,8 @@ const handleClearHistory = (): void => {
 
     <CheckoutBar 
       :grandTotal="grandTotal"
+      v-model:passportId="passportId"
+      :showPassportWarning="showPassportWarning"
       @clear="handleLimpar(false)"
       @finalize="handleFinalizar"
     />

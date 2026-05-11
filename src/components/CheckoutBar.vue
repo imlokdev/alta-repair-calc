@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { formatCurrency } from '../utils/formatters'
 
+const passportId = defineModel<string>('passportId')
+
 defineProps<{
   grandTotal: number;
+  showPassportWarning: boolean;
 }>()
 
 // AQUI ESTAVA O BUG: Faltava o "const emit =" para podermos usar no template!
@@ -10,6 +13,10 @@ const emit = defineEmits<{
   (e: 'clear'): void;
   (e: 'finalize'): void;
 }>()
+
+const preventInvalidChars = (e: KeyboardEvent): void => {
+  if (['e', 'E', '+', '-', '.', ','].includes(e.key)) e.preventDefault()
+}
 </script>
 
 <template>
@@ -35,6 +42,9 @@ const emit = defineEmits<{
         >
           Limpar
         </button>
+        <div class="relative h-12 w-full md:w-auto">
+          <input id="passportInput" type="number" v-model="passportId" @keydown="preventInvalidChars" @keyup.enter="emit('finalize')" :placeholder="showPassportWarning ? 'INFORME O ID!' : 'PASSAPORTE'" min="1" :class="['no-spin-button w-full md:w-36 h-full px-4 text-xs font-bold text-center uppercase tracking-widest rounded-xl bg-white dark:bg-[#151822] outline-none transition-all shadow-sm', showPassportWarning ? 'border-2 border-red-500 text-red-500 placeholder:text-red-400 animate-pulse' : 'border border-slate-200 dark:border-gray-800 text-slate-800 dark:text-gray-200 focus:border-[#ffca28] placeholder:text-slate-400']">
+        </div>
         <button 
           @click="emit('finalize')"
           :disabled="grandTotal === 0"
