@@ -105,7 +105,14 @@ const onBlur = (itemId: string, event: Event) => {
         <!-- Header do Item -->
         <div class="flex justify-between items-start">
           <div class="flex items-center gap-2 pr-2 min-w-0">
-            <span class="text-lg bg-white dark:bg-[#151822] w-8 h-8 flex items-center justify-center rounded-lg shadow-sm border border-slate-100 dark:border-transparent shrink-0">{{ item.icon }}</span>
+            <span class="text-lg bg-white dark:bg-[#151822] w-8 h-8 flex items-center justify-center rounded-lg shadow-sm border border-slate-100 dark:border-transparent shrink-0 overflow-hidden">
+              <template v-if="item.icon.endsWith('.png')">
+                <img :src="item.icon" :alt="item.name" class="w-full h-full object-contain p-1" />
+              </template>
+              <template v-else>
+                {{ item.icon }}
+              </template>
+            </span>
             <span class="text-[9px] font-bold dark:text-gray-200 uppercase truncate">{{ item.outputName }}</span>
           </div>
           <button @click="emit('setQuantity', item.id, 0)" class="text-slate-400 hover:text-red-500 transition shrink-0 bg-white dark:bg-[#151822] p-1.5 rounded-lg border border-slate-100 dark:border-transparent shadow-sm">

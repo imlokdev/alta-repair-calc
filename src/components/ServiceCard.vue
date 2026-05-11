@@ -18,8 +18,13 @@ defineEmits<{
     
     <!-- Lado Esquerdo Blindado: min-w-[200px] e flex-1 -->
     <div class="flex items-center gap-4 flex-1 min-w-[200px]">
-      <div class="w-14 h-14 shrink-0 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-[#0b0e14] text-2xl shadow-inner">
-        {{ item.icon }}
+      <div class="w-14 h-14 shrink-0 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-[#0b0e14] text-2xl shadow-inner overflow-hidden">
+        <template v-if="item.icon.endsWith('.png')">
+          <img :src="item.icon" :alt="item.name" class="w-full h-full object-contain p-2" />
+        </template>
+        <template v-else>
+          {{ item.icon }}
+        </template>
       </div>
       
       <!-- O min-w-0 aqui é crucial para o truncate do texto funcionar dentro do flexbox -->

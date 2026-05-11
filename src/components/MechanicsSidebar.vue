@@ -84,8 +84,13 @@ onBeforeUnmount(() => {
     <div class="flex-1 overflow-y-auto p-3 flex flex-col gap-2 custom-scrollbar">
       <div v-for="item in items" :key="item.id" class="flex flex-col gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-[#0b0e14] border border-slate-200 dark:border-[#1e2330] hover:border-[#ffca28] dark:hover:border-[#ffca28] transition shadow-sm">
         <div class="flex items-center gap-3">
-          <div class="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg bg-white dark:bg-[#151822] text-lg shadow-inner border border-slate-100 dark:border-transparent">
-            {{ item.icon }}
+          <div class="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-lg bg-white dark:bg-[#151822] text-lg shadow-inner border border-slate-100 dark:border-transparent overflow-hidden">
+            <template v-if="item.icon.endsWith('.png')">
+              <img :src="item.icon" :alt="item.name" class="w-full h-full object-contain p-1" />
+            </template>
+            <template v-else>
+              {{ item.icon }}
+            </template>
           </div>
           <div class="flex-1 min-w-0">
             <p class="text-[9px] font-bold text-slate-800 dark:text-gray-200 tracking-tight uppercase leading-tight truncate">{{ item.name }}</p>

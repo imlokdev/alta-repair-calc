@@ -10,8 +10,8 @@ export const mechanicsItems: MechanicItem[] = [
   { id: 'guinc_vei', name: 'GUINCHO ADICIONAL', outputName: 'Guincho Adicional', price: 250, icon: '🚚', category: 'MECÂNICA', isCera: false, isKit: false },
 
   // KIT'S
-  { id: 'kit_sim', name: 'KIT REPARO SIMPLES', outputName: 'Kit Simples', price: 600, icon: '🧰', category: 'KIT\'s', isCera: false, isKit: true },
-  { id: 'kit_ava', name: 'KIT REPARO AVANÇADO', outputName: 'Kit Avançado', price: 2200, icon: '🧰', category: 'KIT\'s', isCera: false, isKit: true },
+  { id: 'kit_sim', name: 'KIT REPARO SIMPLES', outputName: 'Kit Simples', price: 600, icon: '/kit_reparo_simples.png', category: 'KIT\'s', isCera: false, isKit: true },
+  { id: 'kit_ava', name: 'KIT REPARO AVANÇADO', outputName: 'Kit Avançado', price: 2200, icon: '/kit_reparo_avançado.png', category: 'KIT\'s', isCera: false, isKit: true },
 
   // SEGURO
   { id: 'seg_norm', name: 'MANDAR CARRO PARA O SEGURO', outputName: 'Seguro de Carro', price: 500, icon: '📄', category: 'SEGURO', isCera: false, isKit: false },
