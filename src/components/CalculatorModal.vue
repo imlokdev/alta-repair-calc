@@ -24,10 +24,13 @@ const calcResult = computed(() => {
 
 const handleCalcInput = (e: Event) => {
   const target = e.target as HTMLInputElement
+  
+  // Limpeza agressiva: remove tudo que não for número (bloqueia e, +, - e pontuações)
   let rawVal = target.value.replace(/\D/g, '')
   
   if (!rawVal) {
     displayValue.value = ''
+    target.value = ''
     return
   }
 
