@@ -23,7 +23,7 @@ const showPassportWarning = ref<boolean>(false)
 const history = ref<HistoryRecord[]>([])
 const isDarkMode = ref<boolean>(true)
 const showModal = ref<boolean>(false)
-const showCalculator = ref<boolean>(false) // NOVO ESTADO
+const showCalculator = ref<boolean>(false)
 const highlightedRecordId = ref<number | null>(null)
 
 // Estados das Sidebars
@@ -117,7 +117,6 @@ const openHistoryWithHighlight = (id: number) => {
   showModal.value = true
 }
 
-// === FINALIZAR ALTERADO PARA IGNORAR KIT SIMPLES ===
 const handleFinalizar = (): void => {
   if (grandTotal.value === 0) return
 
@@ -131,13 +130,11 @@ const handleFinalizar = (): void => {
   let kitsLines: string[] = []
   let cerasLines: string[] = []
 
-  // NOVO PADRÃO: Puxa apenas o Kit Avançado (Ignora o Kit Simples)
   const kitAvaQty = quantities.value['kit_ava'] || 0
   if (kitAvaQty > 0) {
     kitsLines.push(`${kitAvaQty}x Kit Avançado | ID: ${passportId.value}`)
   }
 
-  // Ceras continuam normais
   mechanicsItems.forEach(item => {
     const qty = quantities.value[item.id]
     if (qty > 0 && item.isCera) {
@@ -154,7 +151,7 @@ const handleFinalizar = (): void => {
     passportId: passportId.value,
     total: grandTotal.value,
     summary: itemsInOrder.value,
-    kitsText: kitsLines.join('\n'), // Sem header, formatação direta em linha
+    kitsText: kitsLines.join('\n'), 
     cerasText: cerasLines.length > 0 ? header + cerasLines.join('\n') : ''
   }
   
@@ -210,13 +207,14 @@ const handleClearHistory = (): void => {
     />
 
     <main class="flex-1 w-full max-w-7xl mx-auto px-4 flex flex-col gap-6 min-h-0">
+      
       <div class="shrink-0 flex flex-wrap items-center gap-3">
         <button 
           v-for="cat in categories" 
           :key="cat"
           @click="activeCategory = activeCategory === cat ? '' : cat; searchQuery = ''"
           :class="[
-            'px-8 py-3 text-xs font-bold tracking-widest rounded-xl transition-all duration-200',
+            'cursor-pointer px-8 py-3 text-xs font-bold tracking-widest rounded-xl transition-all duration-200',
             activeCategory === cat && !searchQuery 
               ? 'bg-[#ffca28] text-slate-900 shadow-lg shadow-yellow-500/20' 
               : 'bg-transparent border border-slate-300 dark:border-gray-800 text-slate-500 dark:text-gray-500 hover:border-slate-400 dark:hover:border-gray-600'
