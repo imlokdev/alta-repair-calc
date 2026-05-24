@@ -9,6 +9,7 @@ import AppHeader from './components/AppHeader.vue'
 import ServiceCard from './components/ServiceCard.vue'
 import CheckoutBar from './components/CheckoutBar.vue'
 import HistoryModal from './components/HistoryModal.vue'
+import CalculatorModal from './components/CalculatorModal.vue'
 import ToastNotification from './components/ToastNotification.vue'
 
 const activeCategory = ref<string>('KIT\'s')
@@ -22,6 +23,7 @@ const showPassportWarning = ref<boolean>(false)
 const history = ref<HistoryRecord[]>([])
 const isDarkMode = ref<boolean>(true)
 const showModal = ref<boolean>(false)
+const showCalculator = ref<boolean>(false) // NOVO ESTADO
 const highlightedRecordId = ref<number | null>(null)
 
 // Estados das Sidebars
@@ -115,6 +117,7 @@ const openHistoryWithHighlight = (id: number) => {
   showModal.value = true
 }
 
+// === FINALIZAR ALTERADO PARA IGNORAR KIT SIMPLES ===
 const handleFinalizar = (): void => {
   if (grandTotal.value === 0) return
 
@@ -125,14 +128,20 @@ const handleFinalizar = (): void => {
     return
   }
 
-  const kitsLines: string[] = []
-  const cerasLines: string[] = []
+  let kitsLines: string[] = []
+  let cerasLines: string[] = []
 
+  // NOVO PADRÃO: Puxa apenas o Kit Avançado (Ignora o Kit Simples)
+  const kitAvaQty = quantities.value['kit_ava'] || 0
+  if (kitAvaQty > 0) {
+    kitsLines.push(`${kitAvaQty}x Kit Avançado | ID: ${passportId.value}`)
+  }
+
+  // Ceras continuam normais
   mechanicsItems.forEach(item => {
     const qty = quantities.value[item.id]
-    if (qty > 0) {
-      if (item.isCera) cerasLines.push(`${qty}x ${item.outputName}`)
-      if (item.isKit) kitsLines.push(`${qty}x ${item.outputName}`)
+    if (qty > 0 && item.isCera) {
+      cerasLines.push(`${qty}x ${item.outputName}`)
     }
   })
 
@@ -145,15 +154,14 @@ const handleFinalizar = (): void => {
     passportId: passportId.value,
     total: grandTotal.value,
     summary: itemsInOrder.value,
-    kitsText: kitsLines.length > 0 ? header + kitsLines.join('\n') : '',
+    kitsText: kitsLines.join('\n'), // Sem header, formatação direta em linha
     cerasText: cerasLines.length > 0 ? header + cerasLines.join('\n') : ''
   }
   
   history.value.unshift(record)
   localStorage.setItem('alta_repair_history', JSON.stringify(history.value))
-  handleLimpar(true) // Limpa sem disparar o toast de limpar
+  handleLimpar(true)
 
-  // Dispara o toast de sucesso com evento de clique
   addToast({ 
     type: 'success', 
     title: 'Venda Finalizada!', 
@@ -198,6 +206,7 @@ const handleClearHistory = (): void => {
       :isDarkMode="isDarkMode"
       @toggleTheme="toggleTheme()"
       @openHistory="showModal = true"
+      @openCalculator="showCalculator = true"
     />
 
     <main class="flex-1 w-full max-w-7xl mx-auto px-4 flex flex-col gap-6 min-h-0">
@@ -246,8 +255,12 @@ const handleClearHistory = (): void => {
       @close="showModal = false; highlightedRecordId = null" 
       @clearHistory="handleClearHistory" 
     />
+
+    <CalculatorModal 
+      :show="showCalculator" 
+      @close="showCalculator = false" 
+    />
     
-    <!-- Renderiza os Toasts Globalmente -->
     <ToastNotification 
       :toasts="toasts" 
       @remove="removeToast" 
