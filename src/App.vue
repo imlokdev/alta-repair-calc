@@ -252,6 +252,7 @@ const handleClearHistory = (): void => {
       :highlightedId="highlightedRecordId"
       @close="showModal = false; highlightedRecordId = null" 
       @clearHistory="handleClearHistory" 
+      @notify="addToast"
     />
 
     <CalculatorModal 
