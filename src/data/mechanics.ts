@@ -24,8 +24,8 @@ export const mechanicsItems: MechanicItem[] = [
   { id: 'cera_del', name: 'CERA AUTOMOTIVA DELUXE', outputName: 'Cera Deluxe', price: 4200, icon: '/Cera_deluxe.png', category: 'ESTÉTICA', isCera: true, isKit: false },
 
   // OUTROS
-  { id: 'chave_gri', name: 'CHAVE DE GRIFO', outputName: 'Chave de Grifo', price: 700, icon: '🔧', category: 'OUTROS', isCera: false, isKit: false },
-  { id: 'venda_pne', name: 'VENDA DE PNEU', outputName: 'Pneu', price: 180, icon: '🛞', category: 'OUTROS', isCera: false, isKit: false },
-  { id: 'gal_vaz', name: 'GALÃO VAZIO DE GASOLINA', outputName: 'Galão Vazio', price: 300, icon: '🛢️', category: 'OUTROS', isCera: false, isKit: false },
-  { id: 'venda_gal', name: 'GALÃO DE COMBUSTÍVEL CHEIO', outputName: 'Galão Cheio', price: 700, icon: '⛽', category: 'OUTROS', isCera: false, isKit: false }
+  { id: 'chave_gri', name: 'CHAVE DE GRIFO', outputName: 'Chave de Grifo', price: 700, icon: '/Chave_de_Grifo.png', category: 'OUTROS', isCera: false, isKit: false },
+  { id: 'venda_pne', name: 'VENDA DE PNEU', outputName: 'Pneu', price: 180, icon: '/pneu.png', category: 'OUTROS', isCera: false, isKit: false },
+  { id: 'gal_vaz', name: 'GALÃO VAZIO DE GASOLINA', outputName: 'Galão Vazio', price: 300, icon: '/gal_vazio.png', category: 'OUTROS', isCera: false, isKit: false },
+  { id: 'venda_gal', name: 'GALÃO DE COMBUSTÍVEL CHEIO', outputName: 'Galão Cheio', price: 700, icon: '/venda_gal.png', category: 'OUTROS', isCera: false, isKit: false }
 ];
