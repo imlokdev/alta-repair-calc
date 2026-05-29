@@ -19,9 +19,9 @@ export const mechanicsItems: MechanicItem[] = [
   { id: 'seg_aero', name: 'SEGURO DE AERONAVES', outputName: 'Seguro de Aeronaves', price: 700, icon: '/seguro_aeronaves.png', category: 'SEGURO', isCera: false, isKit: false },
 
   // ESTÉTICA (Ceras)
-  { id: 'cera_sim', name: 'CERA AUTOMOTIVA SIMPLES', outputName: 'Cera Simples', price: 600, icon: '🧴', category: 'ESTÉTICA', isCera: true, isKit: false },
-  { id: 'cera_pre', name: 'CERA AUTOMOTIVA PREMIUM', outputName: 'Cera Premium', price: 1800, icon: '🧴', category: 'ESTÉTICA', isCera: true, isKit: false },
-  { id: 'cera_del', name: 'CERA AUTOMOTIVA DELUXE', outputName: 'Cera Deluxe', price: 4200, icon: '💎', category: 'ESTÉTICA', isCera: true, isKit: false },
+  { id: 'cera_sim', name: 'CERA AUTOMOTIVA SIMPLES', outputName: 'Cera Simples', price: 600, icon: '/cera_Simples.png', category: 'ESTÉTICA', isCera: true, isKit: false },
+  { id: 'cera_pre', name: 'CERA AUTOMOTIVA PREMIUM', outputName: 'Cera Premium', price: 1800, icon: '/Cera_premium.png', category: 'ESTÉTICA', isCera: true, isKit: false },
+  { id: 'cera_del', name: 'CERA AUTOMOTIVA DELUXE', outputName: 'Cera Deluxe', price: 4200, icon: '/Cera_deluxe.png', category: 'ESTÉTICA', isCera: true, isKit: false },
 
   // OUTROS
   { id: 'chave_gri', name: 'CHAVE DE GRIFO', outputName: 'Chave de Grifo', price: 700, icon: '🔧', category: 'OUTROS', isCera: false, isKit: false },
