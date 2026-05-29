@@ -16,7 +16,7 @@ export const mechanicsItems: MechanicItem[] = [
   // SEGURO
   { id: 'seg_norm', name: 'MANDAR CARRO PARA O SEGURO', outputName: 'Seguro de Carro', price: 500, icon: '/mandar_veiculo_seguro.png', category: 'SEGURO', isCera: false, isKit: false },
   { id: 'seg_expl', name: 'SEGURO PARA CARRO EXPLODIDO', outputName: 'Seguro (Carro Explodido)', price: 600, icon: '/seguro_carro_explodido.png', category: 'SEGURO', isCera: false, isKit: false },
-  { id: 'seg_aero', name: 'SEGURO DE AERONAVES', outputName: 'Seguro de Aeronaves', price: 700, icon: '/seguro_aeronave.png', category: 'SEGURO', isCera: false, isKit: false },
+  { id: 'seg_aero', name: 'SEGURO DE AERONAVES', outputName: 'Seguro de Aeronaves', price: 700, icon: '/seguro_aeronaves.png', category: 'SEGURO', isCera: false, isKit: false },
 
   // ESTÉTICA (Ceras)
   { id: 'cera_sim', name: 'CERA AUTOMOTIVA SIMPLES', outputName: 'Cera Simples', price: 600, icon: '🧴', category: 'ESTÉTICA', isCera: true, isKit: false },
