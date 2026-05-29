@@ -4,10 +4,10 @@ export const categories: string[] = ['KIT\'s', 'SEGURO', 'ESTÉTICA', 'OUTROS'];
 
 export const mechanicsItems: MechanicItem[] = [
   // MECÂNICA
-  { id: 'veic', name: 'REPARO DE VEÍCULOS', outputName: 'Reparo de Veículos', price: 150, icon: '🚗', category: 'MECÂNICA', isCera: false, isKit: false },
-  { id: 'aero_rep', name: 'REPARO DE AERONAVES', outputName: 'Reparo de Aeronaves', price: 600, icon: '✈️', category: 'MECÂNICA', isCera: false, isKit: false },
-  { id: 'pneu_rep', name: 'TROCA DE PNEU E REPARO', outputName: 'Troca de Pneu e Reparo', price: 180, icon: '🔧', category: 'MECÂNICA', isCera: false, isKit: false },
-  { id: 'guinc_vei', name: 'GUINCHO ADICIONAL', outputName: 'Guincho Adicional', price: 250, icon: '🚚', category: 'MECÂNICA', isCera: false, isKit: false },
+  { id: 'veic', name: 'REPARO DE VEÍCULOS', outputName: 'Reparo de Veículos', price: 150, icon: '/reparo_veiculos.png', category: 'MECÂNICA', isCera: false, isKit: false },
+  { id: 'aero_rep', name: 'REPARO DE AERONAVES', outputName: 'Reparo de Aeronaves', price: 600, icon: '/reparo_aeronaves.png', category: 'MECÂNICA', isCera: false, isKit: false },
+  { id: 'pneu_rep', name: 'TROCA DE PNEU E REPARO', outputName: 'Troca de Pneu e Reparo', price: 180, icon: '/troca_pneu_reparo.png', category: 'MECÂNICA', isCera: false, isKit: false },
+  { id: 'guinc_vei', name: 'GUINCHO ADICIONAL', outputName: 'Guincho Adicional', price: 250, icon: '/guincho.png', category: 'MECÂNICA', isCera: false, isKit: false },
 
   // KIT'S
   { id: 'kit_sim', name: 'KIT REPARO SIMPLES', outputName: 'Kit Simples', price: 600, icon: '/kit_reparo_simples.png', category: 'KIT\'s', isCera: false, isKit: true },
