@@ -19,7 +19,7 @@ const numericValue = computed(() => {
 })
 
 const calcResult = computed(() => {
-  return numericValue.value * 0.15
+  return numericValue.value * 0.20
 })
 
 const handleCalcInput = (e: Event) => {
@@ -140,7 +140,7 @@ const handleClose = () => {
           </div>
 
           <div class="p-4 rounded-2xl bg-[#ffca28]/10 border border-[#ffca28]/20 flex items-center justify-between">
-            <span class="text-[10px] font-bold uppercase tracking-widest text-[#ffca28]">Parte da mecânica (15%)</span>
+            <span class="text-[10px] font-bold uppercase tracking-widest text-[#ffca28]">Parte da mecânica (20%)</span>
             <span class="text-3xl font-black text-[#ffca28] tracking-tighter">
               {{ formatCurrency(calcResult) }}
             </span>
