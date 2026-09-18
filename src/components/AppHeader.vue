@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
 import logoUrl from '../assets/logo.png'
 
 const searchQuery = defineModel<string>('searchQuery')
@@ -7,11 +8,27 @@ defineProps<{
   isDarkMode: boolean;
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'toggleTheme'): void;
   (e: 'openHistory'): void;
   (e: 'openCalculator'): void;
 }>()
+
+const isAuthenticated = ref<boolean>(false)
+
+onMounted(() => {
+  isAuthenticated.value = !!localStorage.getItem('alta_repair_token')
+})
+
+const handleLogin = () => {
+  // Ajuste esta URL para a rota que inicializa o OAuth2 no seu backend real
+  window.location.href = 'http://localhost:3000/auth/calculator/discord'
+}
+
+const handleLogout = () => {
+  localStorage.removeItem('alta_repair_token')
+  isAuthenticated.value = false
+}
 </script>
 
 <template>
@@ -31,6 +48,26 @@ defineEmits<{
     </div>
     
     <div class="flex flex-wrap items-center gap-3">
+      
+      <!-- BOTÃO DE LOGIN / LOGOUT DO DISCORD -->
+      <button 
+        v-if="!isAuthenticated" 
+        @click="handleLogin" 
+        class="h-11 px-4 flex items-center justify-center gap-2 rounded-xl bg-[#5865F2] hover:bg-[#4752C4] text-white font-bold text-xs uppercase tracking-widest transition shadow-sm"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 fill-current" viewBox="0 0 127.14 96.36">
+          <path d="M107.7 8.07A105.15 105.15 0 0081.47 0a72.06 72.06 0 00-3.36 6.83 97.68 97.68 0 00-29.08 0A72.37 72.37 0 0045.67 0 105.15 105.15 0 0019.44 8.07C2.79 32.65-1.74 56.63.53 80.2a105.73 105.73 0 0032.1 16.16 77.7 77.7 0 006.89-11.1 68.42 68.42 0 01-10.85-5.18c.91-.66 1.8-1.34 2.66-2a75.57 75.57 0 0064.32 0c.87.71 1.76 1.39 2.66 2a68.68 68.68 0 01-10.87 5.19 77 77 0 006.89 11.1 105.25 105.25 0 0032.14-16.16c2.61-27.19-4.32-50.51-18.77-72.14zM42.56 65.31c-5.36 0-9.76-4.9-9.76-10.93s4.3-10.93 9.76-10.93c5.5 0 9.8 4.96 9.76 10.93 0 6-4.3 10.93-9.76 10.93zm42.02 0c-5.36 0-9.76-4.9-9.76-10.93s4.3-10.93 9.76-10.93c5.5 0 9.8 4.96 9.76 10.93 0 6-4.3 10.93-9.76 10.93z"/>
+        </svg>
+        Login
+      </button>
+      <button 
+        v-else 
+        @click="handleLogout" 
+        class="h-11 px-4 flex items-center justify-center rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-500 font-bold text-xs uppercase tracking-widest transition border border-red-500/20 shadow-sm"
+      >
+        Sair
+      </button>
+
       <button @click="$emit('openCalculator')" class="w-11 h-11 flex items-center justify-center rounded-xl bg-white dark:bg-[#151822] border border-slate-200 dark:border-gray-800 text-slate-600 dark:text-gray-400 hover:text-[#ffca28] transition shadow-sm" title="Calculadora 15%">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
