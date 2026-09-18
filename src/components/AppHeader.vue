@@ -21,8 +21,9 @@ onMounted(() => {
 })
 
 const handleLogin = () => {
-  // Ajuste esta URL para a rota que inicializa o OAuth2 no seu backend real
-  window.location.href = 'http://localhost:3000/auth/calculator/discord'
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+  
+  window.location.href = `${apiUrl}/auth/calculator/discord`
 }
 
 const handleLogout = () => {
@@ -30,7 +31,6 @@ const handleLogout = () => {
   isAuthenticated.value = false
 }
 </script>
-
 <template>
   <header class="shrink-0 w-full max-w-7xl mx-auto px-4 py-6 flex flex-col md:flex-row items-center justify-between gap-6">
     <div class="flex items-center gap-4">
