@@ -118,7 +118,7 @@ const handleClose = () => {
       
       <div class="shrink-0 flex items-center justify-between p-6 pb-4 border-b border-slate-100 dark:border-[#1e2330]">
         <h3 class="font-black italic text-xl tracking-tighter text-slate-900 dark:text-white uppercase flex items-center gap-2">
-          <span>🧮</span> CALCULADORAS
+          <span>🧮</span> CALCULADORA
         </h3>
         <button @click="handleClose" class="cursor-pointer text-slate-400 hover:text-slate-900 dark:hover:text-white transition">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -127,7 +127,7 @@ const handleClose = () => {
 
       <div class="flex-1 p-6 space-y-6 overflow-y-auto custom-scrollbar">
 
-        <div class="flex flex-col gap-4">
+        <!-- <div class="flex flex-col gap-4">
           <div class="flex flex-col gap-2">
             <label class="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-gray-500">Valor do Orçamento</label>
             <input 
@@ -151,7 +151,7 @@ const handleClose = () => {
           <div class="h-px bg-slate-200 dark:bg-[#1e2330] flex-1"></div>
           <span class="text-[9px] font-bold uppercase tracking-widest text-slate-400">TUNING & CUSTOM</span>
           <div class="h-px bg-slate-200 dark:bg-[#1e2330] flex-1"></div>
-        </div>
+        </div> -->
 
         <div class="flex flex-col gap-4">
           
