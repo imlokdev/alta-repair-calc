@@ -7,9 +7,14 @@ const router = useRouter()
 
 onMounted(() => {
   const token = route.query.token as string
+  const name = route.query.name as string
+  const avatar = route.query.avatar as string
   
   if (token) {
     localStorage.setItem('alta_repair_token', token)
+    
+    if (name) localStorage.setItem('alta_repair_user_name', name)
+    if (avatar) localStorage.setItem('alta_repair_user_avatar', avatar)
   }
 
   router.replace('/')
