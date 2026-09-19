@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { formatCurrency } from '../utils/formatters'
+// import { formatCurrency } from '../utils/formatters'
 
 defineProps<{
   show: boolean;
@@ -13,33 +13,33 @@ const emit = defineEmits<{
 // === LÓGICA: CALCULADORA 15% ===
 const displayValue = ref<string>('')
 
-const numericValue = computed(() => {
-  const parsed = parseInt(displayValue.value.replace(/\D/g, ''), 10)
-  return isNaN(parsed) ? 0 : parsed
-})
+// const numericValue = computed(() => {
+//   const parsed = parseInt(displayValue.value.replace(/\D/g, ''), 10)
+//   return isNaN(parsed) ? 0 : parsed
+// })
 
-const calcResult = computed(() => {
-  return numericValue.value * 0.20
-})
+// const calcResult = computed(() => {
+//   return numericValue.value * 0.20
+// })
 
-const handleCalcInput = (e: Event) => {
-  const target = e.target as HTMLInputElement
+// const handleCalcInput = (e: Event) => {
+//   const target = e.target as HTMLInputElement
   
-  // Limpeza agressiva: remove tudo que não for número (bloqueia e, +, - e pontuações)
-  let rawVal = target.value.replace(/\D/g, '')
+//   // Limpeza agressiva: remove tudo que não for número (bloqueia e, +, - e pontuações)
+//   let rawVal = target.value.replace(/\D/g, '')
   
-  if (!rawVal) {
-    displayValue.value = ''
-    target.value = ''
-    return
-  }
+//   if (!rawVal) {
+//     displayValue.value = ''
+//     target.value = ''
+//     return
+//   }
 
-  let val = parseInt(rawVal, 10)
-  if (val > 999999) val = 999999
+//   let val = parseInt(rawVal, 10)
+//   if (val > 999999) val = 999999
   
-  displayValue.value = new Intl.NumberFormat('pt-BR').format(val)
-  target.value = displayValue.value 
-}
+//   displayValue.value = new Intl.NumberFormat('pt-BR').format(val)
+//   target.value = displayValue.value 
+// }
 
 // === LÓGICA: TUNING ===
 const weightCurrent = ref<string>('')
