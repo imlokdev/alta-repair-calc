@@ -112,13 +112,19 @@ const openHistoryWithHighlight = (id: number) => {
   showModal.value = true
 }
 
-const handleFinalizar = (): void => {
+const handleFinalizar = async (): Promise<void> => {
   if (grandTotal.value === 0) return
 
   if (!passportId.value || Number(passportId.value) <= 0) {
     showPassportWarning.value = true
     document.getElementById('passportInput')?.focus()
     addToast({ type: 'error', title: 'Aviso', message: 'Preencha o Passaporte do cliente!' })
+    return
+  }
+
+  const token = localStorage.getItem('alta_repair_token')
+  if (!token) {
+    addToast({ type: 'error', title: 'Não Autenticado', message: 'Faça login com o Discord para registrar a venda.' })
     return
   }
 
@@ -137,30 +143,61 @@ const handleFinalizar = (): void => {
     }
   })
 
-  const header = `ID: ${passportId.value}\n\n`
-  const recordId = Date.now()
-  
-  const record: HistoryRecord = {
-    id: recordId,
-    time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-    passportId: passportId.value,
-    total: grandTotal.value,
-    summary: itemsInOrder.value,
-    kitsText: kitsLines.join('\n'), 
-    cerasText: cerasLines.length > 0 ? header + cerasLines.join('\n') : ''
+  const payload = {
+    passportId: passportId.value.toString(),
+    grandTotal: grandTotal.value.toString(),
+    itemsSummary: itemsInOrder.value // Envia o resumo dos itens
   }
-  
-  history.value.unshift(record)
-  localStorage.setItem('alta_repair_history', JSON.stringify(history.value))
-  handleLimpar(true)
 
-  addToast({ 
-    type: 'success', 
-    title: 'Venda Finalizada!', 
-    message: 'Atendimento salvo. Clique aqui para abrir o histórico.',
-    clickable: true,
-    onClick: () => openHistoryWithHighlight(recordId)
-  })
+  try {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+    
+    const response = await fetch(`${apiUrl}/calculator/webhook`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    })
+
+    if (!response.ok) {
+      throw new Error('Falha na autorização ou erro no servidor')
+    }
+
+    // Se a API retornar sucesso, salvamos no histórico local
+    const header = `ID: ${passportId.value}\n\n`
+    const recordId = Date.now()
+    
+    const record: HistoryRecord = {
+      id: recordId,
+      time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+      passportId: passportId.value,
+      total: grandTotal.value,
+      summary: itemsInOrder.value,
+      kitsText: kitsLines.join('\n'), 
+      cerasText: cerasLines.length > 0 ? header + cerasLines.join('\n') : ''
+    }
+    
+    history.value.unshift(record)
+    localStorage.setItem('alta_repair_history', JSON.stringify(history.value))
+    
+    // Limpa o carrinho
+    handleLimpar(true)
+
+    // Notificação de sucesso
+    addToast({ 
+      type: 'success', 
+      title: 'Venda Finalizada!', 
+      message: 'Log enviado ao Discord com sucesso! Clique para ver o histórico.',
+      clickable: true,
+      onClick: () => openHistoryWithHighlight(recordId)
+    })
+
+  } catch (error) {
+    console.error('Erro ao enviar webhook:', error)
+    addToast({ type: 'error', title: 'Erro de Conexão', message: 'Não foi possível enviar o log para o Discord.' })
+  }
 }
 
 const handleClearHistory = (): void => {
