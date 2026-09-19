@@ -112,7 +112,7 @@ const openHistoryWithHighlight = (id: number) => {
   showModal.value = true
 }
 
-const handleFinalizar = async (): Promise<void> => {
+const handleFinalizar = (): void => {
   if (grandTotal.value === 0) return
 
   if (!passportId.value || Number(passportId.value) <= 0) {
@@ -129,7 +129,6 @@ const handleFinalizar = async (): Promise<void> => {
     return
   }
 
-  // Montagem do payload utilizando diretamente os IDs do mechanics.ts
   const payload = {
     passportId: passportId.value.toString(),
     kitAvancadoQty: quantities.value['kit_ava'] || 0,
@@ -138,13 +137,11 @@ const handleFinalizar = async (): Promise<void> => {
     ceraSimplesQty: quantities.value['cera_sim'] || 0
   }
 
-  // Prepara o texto para o histórico local de kits
   let kitsLines: string[] = []
   if (payload.kitAvancadoQty > 0) {
     kitsLines.push(`${payload.kitAvancadoQty}x Kit Avançado | ID: ${passportId.value}`)
   }
 
-  // Prepara o texto para o histórico local de ceras varrendo a lista
   let cerasLines: string[] = []
   mechanicsItems.forEach(item => {
     const qty = quantities.value[item.id]
@@ -153,54 +150,54 @@ const handleFinalizar = async (): Promise<void> => {
     }
   })
 
-  try {
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
-    
-    // Dispara a requisição para a API
-    const response = await fetch(`${apiUrl}/calculator/webhook`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(payload)
-    })
-
-    if (!response.ok) {
-      throw new Error('Falha na autorização ou erro no servidor')
-    }
-
-    const header = `ID: ${passportId.value}\n\n`
-    const recordId = Date.now()
-    
-    // Salva o registro no histórico do navegador
-    const record: HistoryRecord = {
-      id: recordId,
-      time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-      passportId: passportId.value,
-      total: grandTotal.value,
-      summary: itemsInOrder.value,
-      kitsText: kitsLines.join('\n'), 
-      cerasText: cerasLines.length > 0 ? header + cerasLines.join('\n') : ''
-    }
-    
-    history.value.unshift(record)
-    localStorage.setItem('alta_repair_history', JSON.stringify(history.value))
-    
-    handleLimpar(true)
-
-    addToast({ 
-      type: 'success', 
-      title: 'Venda Finalizada!', 
-      message: 'Log enviado ao Discord com sucesso! Clique para ver o histórico.',
-      clickable: true,
-      onClick: () => openHistoryWithHighlight(recordId)
-    })
-
-  } catch (error) {
-    console.error('Erro ao enviar webhook:', error)
-    addToast({ type: 'error', title: 'Erro de Conexão', message: 'Não foi possível enviar o log para o Discord.' })
+  const header = `ID: ${passportId.value}\n\n`
+  const recordId = Date.now()
+  
+  const record: HistoryRecord = {
+    id: recordId,
+    time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+    passportId: passportId.value,
+    total: grandTotal.value,
+    summary: itemsInOrder.value,
+    kitsText: kitsLines.join('\n'), 
+    cerasText: cerasLines.length > 0 ? header + cerasLines.join('\n') : ''
   }
+  
+  history.value.unshift(record)
+  localStorage.setItem('alta_repair_history', JSON.stringify(history.value))
+  
+  handleLimpar(true)
+
+  addToast({ 
+    type: 'success', 
+    title: 'Venda Salva!', 
+    message: 'Atendimento registrado. Sincronizando com o Discord...',
+    clickable: true,
+    onClick: () => openHistoryWithHighlight(recordId)
+  })
+
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+  
+  fetch(`${apiUrl}/calculator/webhook`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify(payload)
+  })
+  .then((response) => {
+    if (!response.ok) throw new Error('Falha no servidor')
+    console.log('Webhook enviado com sucesso em background.')
+  })
+  .catch((error) => {
+    console.error('Erro ao enviar webhook:', error)
+    addToast({ 
+      type: 'error', 
+      title: 'Erro de Sincronização', 
+      message: 'A venda foi salva no histórico, mas falhou ao enviar para o Discord.' 
+    })
+  })
 }
 
 const handleClearHistory = (): void => {
