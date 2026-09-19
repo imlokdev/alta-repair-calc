@@ -122,12 +122,8 @@ const handleFinalizar = (): void => {
     return
   }
 
+  // Apenas puxa o token, mas não bloqueia a execução se ele não existir
   const token = localStorage.getItem('alta_repair_token')
-
-  if (!token) {
-    addToast({ type: 'error', title: 'Não Autenticado', message: 'Faça login com o Discord para registrar a venda.' })
-    return
-  }
 
   const payload = {
     passportId: passportId.value.toString(),
@@ -150,6 +146,7 @@ const handleFinalizar = (): void => {
     }
   })
 
+  // === 1. SALVAMENTO LOCAL (RODA PARA TODOS) ===
   const header = `ID: ${passportId.value}\n\n`
   const recordId = Date.now()
   
@@ -168,36 +165,42 @@ const handleFinalizar = (): void => {
   
   handleLimpar(true)
 
+  // Adapta a mensagem do Toast dependendo se há token ou não
   addToast({ 
     type: 'success', 
     title: 'Venda Salva!', 
-    message: 'Atendimento registrado. Sincronizando com o Discord...',
+    message: token 
+      ? 'Atendimento registrado. Sincronizando com o Discord...' 
+      : 'Salvo localmente no histórico. Copie os textos manualmente.',
     clickable: true,
     onClick: () => openHistoryWithHighlight(recordId)
   })
 
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
-  
-  fetch(`${apiUrl}/calculator/webhook`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
-    body: JSON.stringify(payload)
-  })
-  .then((response) => {
-    if (!response.ok) throw new Error('Falha no servidor')
-    console.log('Webhook enviado com sucesso em background.')
-  })
-  .catch((error) => {
-    console.error('Erro ao enviar webhook:', error)
-    addToast({ 
-      type: 'error', 
-      title: 'Erro de Sincronização', 
-      message: 'A venda foi salva no histórico, mas falhou ao enviar para o Discord.' 
+  // === 2. ENVIO EM SEGUNDO PLANO (APENAS SE LOGADO) ===
+  if (token) {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+    
+    fetch(`${apiUrl}/calculator/webhook`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
     })
-  })
+    .then((response) => {
+      if (!response.ok) throw new Error('Falha no servidor')
+      console.log('Webhook enviado com sucesso em background.')
+    })
+    .catch((error) => {
+      console.error('Erro ao enviar webhook:', error)
+      addToast({ 
+        type: 'error', 
+        title: 'Erro de Sincronização', 
+        message: 'A venda foi salva no histórico, mas falhou ao enviar para o Discord.' 
+      })
+    })
+  }
 }
 
 const handleClearHistory = (): void => {
