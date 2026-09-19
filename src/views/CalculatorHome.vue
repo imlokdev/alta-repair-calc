@@ -19,7 +19,7 @@ const quantities = ref<Record<string, number>>(
 )
 
 const passportId = ref<string>('')
-const kmValue = ref<string>('') // Novo estado para o KM
+const kmValue = ref<string>('')
 const showPassportWarning = ref<boolean>(false)
 const history = ref<HistoryRecord[]>([])
 const isDarkMode = ref<boolean>(true)
@@ -52,6 +52,20 @@ watch(isSidebarPinned, (newVal) => localStorage.setItem('alta_repair_sidebar_pin
 watch(isCartPinned, (newVal) => localStorage.setItem('alta_repair_cart_pinned', String(newVal)))
 watch(passportId, () => { if (passportId.value) showPassportWarning.value = false })
 
+// NOVO: Monitoriza o valor do KM para adicionar/remover o guincho automaticamente
+watch(kmValue, (newVal) => {
+  const km = Number(newVal)
+  if (km > 0) {
+    // Se digitou uma distância e não havia guincho, adiciona 1
+    if (quantities.value['guinc_vei'] === 0) {
+      quantities.value['guinc_vei'] = 1
+    }
+  } else {
+    // Se apagou o valor do KM, remove o guincho do carrinho
+    quantities.value['guinc_vei'] = 0
+  }
+})
+
 const toggleTheme = (dark?: boolean): void => {
   isDarkMode.value = dark ?? !isDarkMode.value
   isDarkMode.value ? document.documentElement.classList.add('dark') : document.documentElement.classList.remove('dark')
@@ -79,7 +93,6 @@ const filteredItems = computed(() => {
   })
 })
 
-// Modificação matemática do cálculo total para considerar o KM do Guincho
 const grandTotal = computed<number>(() => {
   return mechanicsItems.reduce((total, item) => {
     let currentPrice = item.price
@@ -111,7 +124,7 @@ const setQuantity = (itemId: string, value: number): void => {
 const handleLimpar = (silent = false): void => {
   mechanicsItems.forEach(item => quantities.value[item.id] = 0)
   passportId.value = ''
-  kmValue.value = '' // Limpa o input de KM
+  kmValue.value = '' 
   showPassportWarning.value = false
   if (!silent) {
     addToast({ type: 'info', title: 'Carrinho Limpo', message: 'Os itens selecionados foram removidos.' })
