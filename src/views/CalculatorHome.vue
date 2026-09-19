@@ -123,19 +123,29 @@ const handleFinalizar = async (): Promise<void> => {
   }
 
   const token = localStorage.getItem('alta_repair_token')
+
   if (!token) {
     addToast({ type: 'error', title: 'Não Autenticado', message: 'Faça login com o Discord para registrar a venda.' })
     return
   }
 
-  let kitsLines: string[] = []
-  let cerasLines: string[] = []
-
-  const kitAvaQty = quantities.value['kit_ava'] || 0
-  if (kitAvaQty > 0) {
-    kitsLines.push(`${kitAvaQty}x Kit Avançado | ID: ${passportId.value}`)
+  // Montagem do payload utilizando diretamente os IDs do mechanics.ts
+  const payload = {
+    passportId: passportId.value.toString(),
+    kitAvancadoQty: quantities.value['kit_ava'] || 0,
+    ceraDeluxeQty: quantities.value['cera_del'] || 0,
+    ceraPremiumQty: quantities.value['cera_pre'] || 0,
+    ceraSimplesQty: quantities.value['cera_sim'] || 0
   }
 
+  // Prepara o texto para o histórico local de kits
+  let kitsLines: string[] = []
+  if (payload.kitAvancadoQty > 0) {
+    kitsLines.push(`${payload.kitAvancadoQty}x Kit Avançado | ID: ${passportId.value}`)
+  }
+
+  // Prepara o texto para o histórico local de ceras varrendo a lista
+  let cerasLines: string[] = []
   mechanicsItems.forEach(item => {
     const qty = quantities.value[item.id]
     if (qty > 0 && item.isCera) {
@@ -143,15 +153,10 @@ const handleFinalizar = async (): Promise<void> => {
     }
   })
 
-  const payload = {
-    passportId: passportId.value.toString(),
-    grandTotal: grandTotal.value.toString(),
-    itemsSummary: itemsInOrder.value // Envia o resumo dos itens
-  }
-
   try {
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
     
+    // Dispara a requisição para a API
     const response = await fetch(`${apiUrl}/calculator/webhook`, {
       method: 'POST',
       headers: {
@@ -165,10 +170,10 @@ const handleFinalizar = async (): Promise<void> => {
       throw new Error('Falha na autorização ou erro no servidor')
     }
 
-    // Se a API retornar sucesso, salvamos no histórico local
     const header = `ID: ${passportId.value}\n\n`
     const recordId = Date.now()
     
+    // Salva o registro no histórico do navegador
     const record: HistoryRecord = {
       id: recordId,
       time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
@@ -182,10 +187,8 @@ const handleFinalizar = async (): Promise<void> => {
     history.value.unshift(record)
     localStorage.setItem('alta_repair_history', JSON.stringify(history.value))
     
-    // Limpa o carrinho
     handleLimpar(true)
 
-    // Notificação de sucesso
     addToast({ 
       type: 'success', 
       title: 'Venda Finalizada!', 
