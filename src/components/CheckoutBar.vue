@@ -2,13 +2,13 @@
 import { formatCurrency } from '../utils/formatters'
 
 const passportId = defineModel<string>('passportId')
+const kmValue = defineModel<string>('kmValue')
 
 defineProps<{
   grandTotal: number;
   showPassportWarning: boolean;
 }>()
 
-// AQUI ESTAVA O BUG: Faltava o "const emit =" para podermos usar no template!
 const emit = defineEmits<{
   (e: 'clear'): void;
   (e: 'finalize'): void;
@@ -34,17 +34,43 @@ const preventInvalidChars = (e: KeyboardEvent): void => {
         </div>
       </div>
 
-      <!-- Direita: Botões -->
-      <div class="flex items-center gap-4 w-full md:w-auto">
+      <!-- Direita: Botões e Inputs -->
+      <div class="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
         <button 
           @click="emit('clear')"
           class="px-8 h-12 rounded-xl font-bold text-xs uppercase tracking-widest text-red-500 border border-red-500 hover:bg-red-500 hover:text-white transition w-full md:w-auto"
         >
           Limpar
         </button>
-        <div class="relative h-12 w-full md:w-auto">
-          <input id="passportInput" type="number" v-model="passportId" @keydown="preventInvalidChars" @keyup.enter="emit('finalize')" :placeholder="showPassportWarning ? 'INFORME O ID!' : 'PASSAPORTE'" min="1" :class="['no-spin-button w-full md:w-36 h-full px-4 text-xs font-bold text-center uppercase tracking-widest rounded-xl bg-white dark:bg-[#151822] outline-none transition-all shadow-sm', showPassportWarning ? 'border-2 border-red-500 text-red-500 placeholder:text-red-400 animate-pulse' : 'border border-slate-200 dark:border-gray-800 text-slate-800 dark:text-gray-200 focus:border-[#ffca28] placeholder:text-slate-400']">
+        
+        <div class="flex w-full md:w-auto gap-2">
+          <!-- Novo Input de KM -->
+          <div class="relative h-12 w-1/3 md:w-20 shrink-0">
+            <input 
+              id="kmInput" 
+              type="number" 
+              v-model="kmValue" 
+              @keydown="preventInvalidChars" 
+              placeholder="KM" 
+              min="1" 
+              class="no-spin-button w-full h-full px-2 text-xs font-bold text-center uppercase tracking-widest rounded-xl bg-white dark:bg-[#151822] border border-slate-200 dark:border-gray-800 text-slate-800 dark:text-gray-200 focus:border-[#ffca28] placeholder:text-slate-400 outline-none transition-all shadow-sm"
+            >
+          </div>
+          
+          <div class="relative h-12 flex-1 md:w-36">
+            <input 
+              id="passportInput" 
+              type="number" 
+              v-model="passportId" 
+              @keydown="preventInvalidChars" 
+              @keyup.enter="emit('finalize')" 
+              :placeholder="showPassportWarning ? 'INFORME O ID!' : 'PASSAPORTE'" 
+              min="1" 
+              :class="['no-spin-button w-full h-full px-4 text-xs font-bold text-center uppercase tracking-widest rounded-xl bg-white dark:bg-[#151822] outline-none transition-all shadow-sm', showPassportWarning ? 'border-2 border-red-500 text-red-500 placeholder:text-red-400 animate-pulse' : 'border border-slate-200 dark:border-gray-800 text-slate-800 dark:text-gray-200 focus:border-[#ffca28] placeholder:text-slate-400']"
+            >
+          </div>
         </div>
+
         <button 
           @click="emit('finalize')"
           :disabled="grandTotal === 0"

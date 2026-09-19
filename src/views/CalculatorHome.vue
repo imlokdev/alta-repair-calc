@@ -19,6 +19,7 @@ const quantities = ref<Record<string, number>>(
 )
 
 const passportId = ref<string>('')
+const kmValue = ref<string>('') // Novo estado para o KM
 const showPassportWarning = ref<boolean>(false)
 const history = ref<HistoryRecord[]>([])
 const isDarkMode = ref<boolean>(true)
@@ -78,9 +79,18 @@ const filteredItems = computed(() => {
   })
 })
 
-const grandTotal = computed<number>(() => 
-  mechanicsItems.reduce((total, item) => total + (quantities.value[item.id] * item.price), 0)
-)
+// Modificação matemática do cálculo total para considerar o KM do Guincho
+const grandTotal = computed<number>(() => {
+  return mechanicsItems.reduce((total, item) => {
+    let currentPrice = item.price
+    
+    if (item.id === 'guinc_vei' && kmValue.value && Number(kmValue.value) > 0) {
+      currentPrice = Number(kmValue.value) * 50
+    }
+    
+    return total + (quantities.value[item.id] * currentPrice)
+  }, 0)
+})
 
 const itemsInOrder = computed<string>(() => {
   const selected = mechanicsItems.filter(item => quantities.value[item.id] > 0)
@@ -101,6 +111,7 @@ const setQuantity = (itemId: string, value: number): void => {
 const handleLimpar = (silent = false): void => {
   mechanicsItems.forEach(item => quantities.value[item.id] = 0)
   passportId.value = ''
+  kmValue.value = '' // Limpa o input de KM
   showPassportWarning.value = false
   if (!silent) {
     addToast({ type: 'info', title: 'Carrinho Limpo', message: 'Os itens selecionados foram removidos.' })
@@ -122,7 +133,6 @@ const handleFinalizar = (): void => {
     return
   }
 
-  // Apenas puxa o token, mas não bloqueia a execução se ele não existir
   const token = localStorage.getItem('alta_repair_token')
 
   const payload = {
@@ -146,7 +156,6 @@ const handleFinalizar = (): void => {
     }
   })
 
-  // === 1. SALVAMENTO LOCAL (RODA PARA TODOS) ===
   const header = `ID: ${passportId.value}\n\n`
   const recordId = Date.now()
   
@@ -165,7 +174,6 @@ const handleFinalizar = (): void => {
   
   handleLimpar(true)
 
-  // Adapta a mensagem do Toast dependendo se há token ou não
   addToast({ 
     type: 'success', 
     title: 'Venda Salva!', 
@@ -176,7 +184,6 @@ const handleFinalizar = (): void => {
     onClick: () => openHistoryWithHighlight(recordId)
   })
 
-  // === 2. ENVIO EM SEGUNDO PLANO (APENAS SE LOGADO) ===
   if (token) {
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
     
@@ -273,9 +280,11 @@ const handleClearHistory = (): void => {
       </div>
     </main>
 
+    <!-- Adicionado v-model:kmValue -->
     <CheckoutBar 
       :grandTotal="grandTotal"
       v-model:passportId="passportId"
+      v-model:kmValue="kmValue"
       :showPassportWarning="showPassportWarning"
       @clear="handleLimpar(false)"
       @finalize="handleFinalizar"
