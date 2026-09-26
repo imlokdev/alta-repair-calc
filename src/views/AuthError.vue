@@ -5,12 +5,10 @@ import { useRoute, useRouter } from 'vue-router'
 const route = useRoute()
 const router = useRouter()
 
-// Extrai a mensagem da URL e decodifica (ex: %20 vira espaço)
 const errorMessage = computed(() => {
   const msg = route.query.message as string
-  return msg 
-    ? decodeURIComponent(msg) 
-    : 'Ocorreu um erro desconhecido durante a autenticação. Verifique sua conta e tente novamente.'
+  
+  return msg || 'Ocorreu um erro desconhecido durante a autenticação. Verifique sua conta e tente novamente.'
 })
 
 const handleTryAgain = () => {
