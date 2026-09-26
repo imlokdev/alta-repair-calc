@@ -158,48 +158,49 @@ const handleFinalizar = (): void => {
 
   let kitsLines: string[] = []
   if (payload.kitAvancadoQty > 0) {
-    kitsLines.push(`${payload.kitAvancadoQty}x Kit Avançado | ID: ${passportId.value}`)
+    kitsLines.push(`\({payload.kitAvancadoQty}x Kit Avançado | ID:\){passportId.value}`)
   }
 
   let cerasLines: string[] = []
   mechanicsItems.forEach(item => {
     const qty = quantities.value[item.id]
     if (qty > 0 && item.isCera) {
-      cerasLines.push(`${qty}x ${item.outputName}`)
+      cerasLines.push(`\({qty}x\){item.outputName}`)
     }
   })
 
   const header = `ID: ${passportId.value}\n\n`
   const recordId = Date.now()
-
+  
   const record: HistoryRecord = {
     id: recordId,
     time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
     passportId: passportId.value,
     total: grandTotal.value,
     summary: itemsInOrder.value,
-    kitsText: kitsLines.join('\n'),
+    kitsText: kitsLines.join('\n'), 
     cerasText: cerasLines.length > 0 ? header + cerasLines.join('\n') : ''
   }
-
+  
   history.value.unshift(record)
   localStorage.setItem('alta_repair_history', JSON.stringify(history.value))
-
+  
   handleLimpar(true)
 
-  addToast({
-    type: 'success',
-    title: 'Venda Salva!',
-    message: token
-      ? 'Atendimento registrado. Sincronizando com o Discord...'
+  addToast({ 
+    type: 'success', 
+    title: 'Venda Salva!', 
+    message: token 
+      ? 'Atendimento registrado. Sincronizando com o Discord...' 
       : 'Salvo localmente no histórico. Copie os textos manualmente.',
     clickable: true,
     onClick: () => openHistoryWithHighlight(recordId)
   })
 
+  // === 2. ENVIO EM SEGUNDO PLANO (APENAS SE LOGADO) ===
   if (token) {
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
-
+    
     fetch(`${apiUrl}/calculator/webhook`, {
       method: 'POST',
       headers: {
@@ -208,18 +209,44 @@ const handleFinalizar = (): void => {
       },
       body: JSON.stringify(payload)
     })
-      .then((response) => {
-        if (!response.ok) throw new Error('Falha no servidor')
-        console.log('Webhook enviado com sucesso em background.')
-      })
-      .catch((error) => {
-        console.error('Erro ao enviar webhook:', error)
-        addToast({
-          type: 'error',
-          title: 'Erro de Sincronização',
-          message: 'A venda foi salva no histórico, mas falhou ao enviar para o Discord.'
+    .then(async (response) => {
+      if (!response.ok) {
+        // Intercepta o erro 401 (Não Autorizado / Sem Aprovação)
+        if (response.status === 401) {
+          const errorData = await response.json().catch(() => ({}))
+          // Lança um erro customizado para cair no catch abaixo
+          throw { status: 401, message: errorData.message || 'Sessão inválida ou sem permissão.' }
+        }
+        throw new Error('Falha no servidor')
+      }
+      console.log('Webhook enviado com sucesso em background.')
+    })
+    .catch((error) => {
+      console.error('Erro ao enviar webhook:', error)
+      
+      // Tratamento específico para o bloqueio de segurança da API
+      if (error.status === 401) {
+        // Limpa os dados do usuário para deslogá-lo
+        localStorage.removeItem('alta_repair_token')
+        localStorage.removeItem('alta_repair_user_name')
+        localStorage.removeItem('alta_repair_user_avatar')
+        localStorage.removeItem('alta_repair_user_passport')
+        
+        // Exibe a mensagem de erro que veio do backend
+        addToast({ 
+          type: 'error', 
+          title: 'Acesso Revogado', 
+          message: error.message 
         })
-      })
+      } else {
+        // Erro genérico de conexão/servidor
+        addToast({ 
+          type: 'error', 
+          title: 'Erro de Sincronização', 
+          message: 'A venda foi salva no histórico, mas falhou ao enviar para o Discord.' 
+        })
+      }
+    })
   }
 }
 
