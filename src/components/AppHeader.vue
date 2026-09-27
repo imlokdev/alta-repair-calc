@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import logoUrl from '../assets/logo.png'
 
 const searchQuery = defineModel<string>('searchQuery')
@@ -18,10 +18,22 @@ const isAuthenticated = ref<boolean>(false)
 const userName = ref<string>('')
 const userAvatar = ref<string>('')
 
-onMounted(() => {
+// Função extraída para sincronizar o estado com o LocalStorage
+const syncAuthStatus = () => {
   isAuthenticated.value = !!localStorage.getItem('alta_repair_token')
   userName.value = localStorage.getItem('alta_repair_user_name') || 'Usuário'
   userAvatar.value = localStorage.getItem('alta_repair_user_avatar') || ''
+}
+
+onMounted(() => {
+  syncAuthStatus()
+  // Fica escutando o evento global de logout forçado (erro 401)
+  window.addEventListener('auth-updated', syncAuthStatus)
+})
+
+onBeforeUnmount(() => {
+  // Limpa o ouvinte para evitar memory leaks
+  window.removeEventListener('auth-updated', syncAuthStatus)
 })
 
 const handleLogin = () => {
@@ -33,9 +45,10 @@ const handleLogout = () => {
   localStorage.removeItem('alta_repair_token')
   localStorage.removeItem('alta_repair_user_name')
   localStorage.removeItem('alta_repair_user_avatar')
-  isAuthenticated.value = false
-  userName.value = ''
-  userAvatar.value = ''
+  localStorage.removeItem('alta_repair_user_passport')
+  
+  // Atualiza as variáveis de estado reativamente
+  syncAuthStatus()
 }
 </script>
 
