@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { mechanicsItems, categories } from '../data/mechanics'
 import type { HistoryRecord, ToastMessage } from '../types'
 
@@ -27,6 +27,11 @@ const showModal = ref<boolean>(false)
 const showCalculator = ref<boolean>(false)
 const highlightedRecordId = ref<number | null>(null)
 
+// Estados de Autenticação e Relogin
+const isAuthenticated = ref<boolean>(false)
+const showReloginModal = ref<boolean>(false)
+const reloginMessage = ref<string>('')
+
 // Estados das Sidebars
 const isSidebarPinned = ref<boolean>(false)
 const isCartPinned = ref<boolean>(false)
@@ -35,8 +40,40 @@ const isCartPinned = ref<boolean>(false)
 const toasts = ref<ToastMessage[]>([])
 let toastCounter = 0
 
+const syncAuth = () => {
+  isAuthenticated.value = !!localStorage.getItem('alta_repair_token')
+}
+
+const checkFailedCart = () => {
+  const failedCart = localStorage.getItem('alta_repair_failed_cart')
+  if (isAuthenticated.value && failedCart) {
+    addToast({
+      type: 'info',
+      title: 'Venda Interrompida',
+      message: 'Detectamos uma venda que falhou devido à sessão expirada. Deseja restaurar?',
+      clickable: false,
+      action: {
+        label: 'Restaurar Carrinho',
+        onClick: () => {
+          const cart = JSON.parse(failedCart)
+          for (const key in cart.quantities) {
+            quantities.value[key] = cart.quantities[key]
+          }
+          passportId.value = cart.passportId
+          kmValue.value = cart.kmValue
+          localStorage.removeItem('alta_repair_failed_cart')
+          addToast({ type: 'success', title: 'Restaurado', message: 'Itens adicionados de volta ao carrinho!' })
+        }
+      }
+    })
+  }
+}
+
 onMounted(() => {
   toggleTheme(true)
+  syncAuth()
+  
+  window.addEventListener('auth-updated', syncAuth)
 
   const savedHistory = localStorage.getItem('alta_repair_history')
   if (savedHistory) history.value = JSON.parse(savedHistory)
@@ -46,22 +83,25 @@ onMounted(() => {
 
   const savedCartPin = localStorage.getItem('alta_repair_cart_pinned')
   if (savedCartPin === 'true') isCartPinned.value = true
+
+  checkFailedCart()
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('auth-updated', syncAuth)
 })
 
 watch(isSidebarPinned, (newVal) => localStorage.setItem('alta_repair_sidebar_pinned', String(newVal)))
 watch(isCartPinned, (newVal) => localStorage.setItem('alta_repair_cart_pinned', String(newVal)))
 watch(passportId, () => { if (passportId.value) showPassportWarning.value = false })
 
-// NOVO: Monitoriza o valor do KM para adicionar/remover o guincho automaticamente
 watch(kmValue, (newVal) => {
   const km = Number(newVal)
   if (km > 0) {
-    // Se digitou uma distância e não havia guincho, adiciona 1
     if (quantities.value['guinc_vei'] === 0) {
       quantities.value['guinc_vei'] = 1
     }
   } else {
-    // Se apagou o valor do KM, remove o guincho do carrinho
     quantities.value['guinc_vei'] = 0
   }
 })
@@ -75,7 +115,7 @@ const addToast = (toast: Omit<ToastMessage, 'id'>) => {
   const id = toastCounter++
   const wrappedOnClick = toast.onClick ? () => { toast.onClick!(); removeToast(id); } : undefined
   toasts.value.push({ ...toast, id, onClick: wrappedOnClick })
-  setTimeout(() => removeToast(id), 5000)
+  setTimeout(() => removeToast(id), toast.action ? 10000 : 5000)
 }
 
 const removeToast = (id: number) => {
@@ -136,6 +176,14 @@ const openHistoryWithHighlight = (id: number) => {
   showModal.value = true
 }
 
+const updateRecordStatus = (id: number, status: 'success' | 'error') => {
+  const record = history.value.find(r => r.id === id)
+  if (record) {
+    record.syncStatus = status
+    localStorage.setItem('alta_repair_history', JSON.stringify(history.value))
+  }
+}
+
 const handleFinalizar = (): void => {
   if (grandTotal.value === 0) return
 
@@ -156,16 +204,22 @@ const handleFinalizar = (): void => {
     ceraSimplesQty: quantities.value['cera_sim'] || 0
   }
 
+  const cartSnapshot = {
+    quantities: { ...quantities.value },
+    passportId: passportId.value,
+    kmValue: kmValue.value
+  }
+
   let kitsLines: string[] = []
   if (payload.kitAvancadoQty > 0) {
-    kitsLines.push(`\({payload.kitAvancadoQty}x Kit Avançado | ID:\){passportId.value}`)
+    kitsLines.push(`${payload.kitAvancadoQty}x Kit Avançado | ID: ${passportId.value}`)
   }
 
   let cerasLines: string[] = []
   mechanicsItems.forEach(item => {
     const qty = quantities.value[item.id]
     if (qty > 0 && item.isCera) {
-      cerasLines.push(`\({qty}x\){item.outputName}`)
+      cerasLines.push(`${qty}x ${item.outputName}`)
     }
   })
 
@@ -179,7 +233,9 @@ const handleFinalizar = (): void => {
     total: grandTotal.value,
     summary: itemsInOrder.value,
     kitsText: kitsLines.join('\n'),
-    cerasText: cerasLines.length > 0 ? header + cerasLines.join('\n') : ''
+    cerasText: cerasLines.length > 0 ? header + cerasLines.join('\n') : '',
+    syncStatus: token ? 'pending' : undefined,
+    webhookPayload: token ? payload : undefined
   }
 
   history.value.unshift(record)
@@ -216,41 +272,83 @@ const handleFinalizar = (): void => {
           }
           throw new Error('Falha no servidor')
         }
-        console.log('Webhook enviado com sucesso em background.')
+        updateRecordStatus(recordId, 'success')
       })
       .catch((error) => {
-        console.error('Erro ao enviar webhook:', error)
+        updateRecordStatus(recordId, 'error')
 
         if (error.status === 401) {
           localStorage.removeItem('alta_repair_token')
           localStorage.removeItem('alta_repair_user_name')
           localStorage.removeItem('alta_repair_user_avatar')
           localStorage.removeItem('alta_repair_user_passport')
+          
+          localStorage.setItem('alta_repair_failed_cart', JSON.stringify(cartSnapshot))
 
           window.dispatchEvent(new Event('auth-updated'))
 
-          const cleanMessage = error.message.replace(/^(REQUIRE_APPROVAL|REQUIRE_PROFILE):\s*/, '')
-
-          addToast({
-            type: 'error',
-            title: 'Acesso Revogado',
-            message: cleanMessage
-          })
+          reloginMessage.value = error.message.replace(/^(REQUIRE_APPROVAL|REQUIRE_PROFILE):\s*/, '')
+          showReloginModal.value = true
         } else {
-          addToast({
-            type: 'error',
-            title: 'Erro de Sincronização',
-            message: 'A venda foi salva no histórico, mas falhou ao enviar para o Discord.'
-          })
+          addToast({ type: 'error', title: 'Erro de Sincronização', message: 'Falha ao enviar para o Discord. Você pode tentar reenviar no histórico.' })
         }
       })
   }
+}
+
+const handleResend = (record: HistoryRecord) => {
+  const token = localStorage.getItem('alta_repair_token')
+  if (!token) {
+    addToast({ type: 'error', title: 'Erro', message: 'Faça login para reenviar o log.' })
+    return
+  }
+  if (!record.webhookPayload) return
+
+  record.syncStatus = 'pending'
+  localStorage.setItem('alta_repair_history', JSON.stringify(history.value))
+
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+  fetch(`${apiUrl}/calculator/webhook`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify(record.webhookPayload)
+  })
+  .then(async (response) => {
+    if (!response.ok) {
+      if (response.status === 401) {
+        const errorData = await response.json().catch(() => ({}))
+        throw { status: 401, message: errorData.message || 'Sessão inválida' }
+      }
+      throw new Error('Falha')
+    }
+    updateRecordStatus(record.id, 'success')
+    addToast({ type: 'success', title: 'Reenviado', message: 'Log enviado com sucesso para o Discord!' })
+  })
+  .catch((error) => {
+    updateRecordStatus(record.id, 'error')
+    if (error.status === 401) {
+      localStorage.removeItem('alta_repair_token')
+      window.dispatchEvent(new Event('auth-updated'))
+      reloginMessage.value = error.message.replace(/^(REQUIRE_APPROVAL|REQUIRE_PROFILE):\s*/, '')
+      showReloginModal.value = true
+    } else {
+      addToast({ type: 'error', title: 'Erro', message: 'O servidor não respondeu. Tente novamente mais tarde.' })
+    }
+  })
 }
 
 const handleClearHistory = (): void => {
   history.value = []
   localStorage.removeItem('alta_repair_history')
   addToast({ type: 'info', title: 'Histórico Apagado', message: 'Todos os registros foram excluídos do navegador.' })
+}
+
+const handleLogin = () => {
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+  window.location.href = `${apiUrl}/auth/calculator/discord`
 }
 </script>
 
@@ -261,6 +359,7 @@ const handleClearHistory = (): void => {
       isSidebarPinned ? 'md:pl-64 min-[1800px]:pl-0' : 'pl-0',
       isCartPinned ? 'md:pr-72 min-[1800px]:pr-0' : 'pr-0'
     ]">
+    
     <MechanicsSidebar :items="sidebarItems" :quantities="quantities" v-model:pinned="isSidebarPinned"
       @updateQuantity="updateQuantity" />
 
@@ -285,7 +384,6 @@ const handleClearHistory = (): void => {
       </div>
 
       <div class="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-6 flex flex-col">
-        <!-- Grid de Serviços -->
         <section v-if="filteredItems.length > 0"
           class="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-6 content-start mb-auto">
           <ServiceCard v-for="item in filteredItems" :key="item.id" :item="item" :quantity="quantities[item.id]"
@@ -293,10 +391,8 @@ const handleClearHistory = (): void => {
         </section>
         <div v-else class="text-slate-500 dark:text-gray-500 text-sm mt-10 mb-auto">Nenhum serviço encontrado.</div>
 
-        <!-- RODAPÉ DE CRÉDITOS -->
         <footer
           class="mt-16 pb-2 w-full flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-gray-600 transition-colors">
-
           <a href="https://github.com/imlokdev/alta-repair-calc" target="_blank" rel="noopener noreferrer"
             class="flex items-center gap-2 hover:text-slate-900 dark:hover:text-white transition">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
@@ -305,15 +401,12 @@ const handleClearHistory = (): void => {
             </svg>
             <span>Projeto Open Source</span>
           </a>
-
           <div class="hidden sm:block w-1 h-1 rounded-full bg-slate-300 dark:bg-gray-700"></div>
-
           <a href="https://github.com/imlokdev" target="_blank" rel="noopener noreferrer"
             class="flex items-center gap-1 hover:text-[#ffca28] transition group">
             <span>Desenvolvido por</span>
             <span class="text-slate-500 dark:text-gray-400 group-hover:text-[#ffca28] transition">Gabriel Santos</span>
           </a>
-
         </footer>
       </div>
     </main>
@@ -321,11 +414,26 @@ const handleClearHistory = (): void => {
     <CheckoutBar :grandTotal="grandTotal" v-model:passportId="passportId" v-model:kmValue="kmValue"
       :showPassportWarning="showPassportWarning" @clear="handleLimpar(false)" @finalize="handleFinalizar" />
 
-    <HistoryModal :show="showModal" :history="history" :highlightedId="highlightedRecordId"
-      @close="showModal = false; highlightedRecordId = null" @clearHistory="handleClearHistory" @notify="addToast" />
+    <HistoryModal :show="showModal" :history="history" :highlightedId="highlightedRecordId" :isAuthenticated="isAuthenticated"
+      @close="showModal = false; highlightedRecordId = null" @clearHistory="handleClearHistory" @notify="addToast" @resend="handleResend" />
 
     <CalculatorModal :show="showCalculator" @close="showCalculator = false" />
 
     <ToastNotification :toasts="toasts" @remove="removeToast" />
+
+    <!-- MODAL DE RELOGIN -->
+    <div v-if="showReloginModal" class="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm">
+        <div class="bg-white dark:bg-[#151822] rounded-3xl shadow-2xl w-full max-w-sm p-6 text-center border border-slate-200 dark:border-[#1e2330]">
+            <div class="w-16 h-16 rounded-full bg-red-100 dark:bg-red-500/10 flex items-center justify-center mx-auto mb-4 border-4 border-red-50 dark:border-red-500/20">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            </div>
+            <h3 class="font-black text-lg text-slate-900 dark:text-white uppercase tracking-wider mb-2">Sessão Expirada</h3>
+            <p class="text-xs text-slate-500 dark:text-gray-400 mb-6">{{ reloginMessage || 'Sua sessão foi desconectada. Por favor, faça login novamente para continuar sincronizando.' }}</p>
+            <div class="flex flex-col gap-3">
+                <button @click="handleLogin" class="cursor-pointer w-full py-3 rounded-xl font-black text-xs uppercase tracking-widest text-white bg-[#5865F2] hover:bg-[#4752C4] transition shadow-lg shadow-[#5865F2]/20">Fazer Login Novamente</button>
+                <button @click="showReloginModal = false" class="cursor-pointer w-full py-3 rounded-xl font-bold text-xs uppercase tracking-widest text-slate-500 hover:text-slate-700 dark:text-gray-400 dark:hover:text-white transition bg-slate-100 dark:bg-[#1e2330]">Continuar Offline</button>
+            </div>
+        </div>
+    </div>
   </div>
 </template>

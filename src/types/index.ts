@@ -17,6 +17,8 @@ export interface HistoryRecord {
   summary: string;
   kitsText: string;
   cerasText: string;
+  syncStatus?: 'pending' | 'success' | 'error';
+  webhookPayload?: any;
 }
 
 export interface ToastMessage {
@@ -26,4 +28,5 @@ export interface ToastMessage {
   message: string;
   clickable?: boolean;
   onClick?: () => void;
+  action?: { label: string; onClick: () => void };
 }

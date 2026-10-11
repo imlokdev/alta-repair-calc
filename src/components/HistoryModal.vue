@@ -6,12 +6,14 @@ defineProps<{
   show: boolean;
   history: HistoryRecord[];
   highlightedId: number | null;
+  isAuthenticated: boolean;
 }>()
 
 const emit = defineEmits<{
   (e: 'close'): void;
   (e: 'clearHistory'): void;
   (e: 'notify', payload: { type: 'success' | 'info' | 'error', title: string, message: string }): void;
+  (e: 'resend', record: HistoryRecord): void;
 }>()
 
 const copiarTexto = async (text: string, tipo: string) => {
@@ -52,7 +54,21 @@ const copiarTexto = async (text: string, tipo: string) => {
         >
           <div class="flex justify-between items-start mb-2">
             <span class="text-sm font-bold text-[#ffca28] tracking-wider uppercase">Cliente ID: {{ record.passportId }}</span>
-            <span class="text-xs font-bold text-slate-400">{{ record.time }}</span>
+            
+            <div class="flex items-center gap-2">
+              <span v-if="record.syncStatus === 'pending'" class="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-widest bg-blue-100 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20">
+                Enviando...
+              </span>
+              <span v-else-if="record.syncStatus === 'success'" class="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-widest bg-green-100 text-green-600 dark:bg-green-500/10 dark:text-green-400 border border-green-200 dark:border-green-500/20">
+                Enviado
+              </span>
+              <span v-else-if="record.syncStatus === 'error'" class="px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-widest bg-red-100 text-red-600 dark:bg-red-500/10 dark:text-red-400 border border-red-200 dark:border-red-500/20 flex items-center gap-1">
+                Falhou
+                <button v-if="isAuthenticated" @click="emit('resend', record)" class="ml-1 hover:text-red-800 dark:hover:text-red-300 underline underline-offset-2">Reenviar</button>
+              </span>
+              
+              <span class="text-xs font-bold text-slate-400">{{ record.time }}</span>
+            </div>
           </div>
           
           <p class="text-xs text-slate-600 dark:text-gray-400 leading-relaxed mb-4 uppercase">{{ record.summary }}</p>
@@ -63,6 +79,7 @@ const copiarTexto = async (text: string, tipo: string) => {
           </div>
 
           <div class="flex gap-4 border-t border-slate-200 dark:border-[#1e2330] pt-4" v-if="record.kitsText || record.cerasText">
+            <!-- (Os blocos de pre e botão copiar continuam inalterados abaixo) -->
             <div v-if="record.kitsText" class="flex-1 relative group">
               <span class="text-[9px] uppercase text-slate-400 font-bold tracking-widest">Texto Kit's</span>
               <pre class="mt-1 bg-white dark:bg-[#151822] border border-slate-200 dark:border-[#1e2330] text-slate-600 dark:text-gray-400 p-3 pr-10 rounded-xl text-[10px] font-mono overflow-x-auto custom-scrollbar min-h-[60px]">{{ record.kitsText }}</pre>
@@ -82,7 +99,7 @@ const copiarTexto = async (text: string, tipo: string) => {
       </div>
 
       <button v-if="history.length > 0" @click="emit('clearHistory')" class="cursor-pointer w-full py-5 bg-red-50 dark:bg-[#1f1517] hover:bg-red-100 dark:hover:bg-[#2a1b1e] text-red-500 font-bold text-xs tracking-widest uppercase transition">
-        Apagar Todo Histórico
+        Limpar Histórico
       </button>
     </div>
   </div>

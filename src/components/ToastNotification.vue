@@ -36,6 +36,15 @@ defineEmits<{
           <p class="text-[10px] text-slate-500 dark:text-gray-400 mt-0.5 leading-tight">
             {{ toast.message }}
           </p>
+          
+          <button 
+            v-if="toast.action" 
+            @click.stop="toast.action.onClick" 
+            class="mt-2 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-colors"
+            :class="toast.type === 'error' ? 'bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-500/20 dark:text-red-400 dark:hover:bg-red-500/30' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-[#1e2330] dark:text-gray-300 dark:hover:bg-gray-800'"
+          >
+            {{ toast.action.label }}
+          </button>
         </div>
 
         <button @click.stop="$emit('remove', toast.id)" class="shrink-0 text-slate-400 hover:text-slate-800 dark:hover:text-white transition">
