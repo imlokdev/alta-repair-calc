@@ -225,6 +225,11 @@ const handleFinalizar = (): void => {
 
   const header = `ID: ${passportId.value}\n\n`
   const recordId = Date.now()
+  const hasWebhookItems =
+    payload.kitAvancadoQty > 0 ||
+    payload.ceraDeluxeQty > 0 ||
+    payload.ceraPremiumQty > 0 ||
+    payload.ceraSimplesQty > 0
 
   const record: HistoryRecord = {
     id: recordId,
@@ -234,8 +239,8 @@ const handleFinalizar = (): void => {
     summary: itemsInOrder.value,
     kitsText: kitsLines.join('\n'),
     cerasText: cerasLines.length > 0 ? header + cerasLines.join('\n') : '',
-    syncStatus: token ? 'pending' : undefined,
-    webhookPayload: token ? payload : undefined
+    syncStatus: token && hasWebhookItems ? 'pending' : undefined,
+    webhookPayload: token && hasWebhookItems ? payload : undefined
   }
 
   history.value.unshift(record)
@@ -253,7 +258,7 @@ const handleFinalizar = (): void => {
     onClick: () => openHistoryWithHighlight(recordId)
   })
 
-  if (token) {
+  if (token && hasWebhookItems) {
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
     fetch(`${apiUrl}/calculator/webhook`, {
